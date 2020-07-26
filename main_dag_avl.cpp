@@ -5,11 +5,6 @@
 
 using namespace std;
 
-struct Node {
-    Node *left;
-    Node *middle;
-    Node *right;
-};
 
 Node *new_node() {
     Node *node = (struct Node *) malloc(sizeof(struct Node));
@@ -41,7 +36,7 @@ void link_nodes_randomly(vector<Node *> nodes) {
             continue;
         }
 
-        if ((rand() % 3 != 0) and (i != last_idx)) { // connect with probability 2/3
+        if ((rand() % 9 != 0) and (i != last_idx)) { // connect with probability 2/3
             auto max_idx = nodes.size();
             auto min_idx = i + 1;
 
@@ -63,8 +58,8 @@ void visit_reachable_nodes(vector<Node *> *visited_nodes, Node *node) {
     }
 
     bool found = false;
-    for (int i = 0; i < visited_nodes->size(); ++i) {
-        if ((*visited_nodes)[i] == node) {
+    for (auto &visited_node : *visited_nodes) {
+        if (visited_node == node) {
             found = true;
         }
     }
@@ -79,12 +74,24 @@ void visit_reachable_nodes(vector<Node *> *visited_nodes, Node *node) {
 }
 
 Node *generate_dag() {
-    auto nodes = generate_empty_nodes(400);
+    auto nodes = generate_empty_nodes(20000);
     link_nodes_randomly(nodes);
     return nodes[0];
 }
 
 int main(int argc, char *argv[]) {
+    using namespace chrono;
+    if (argc > 1) {
+        srand(atoi(argv[1]));
+    } else {
+        srand(0);
+
+        cout << "You can provide additional parameters when testing: [SEED]" << endl;
+        cout << "  [SEED] - seed used for generating DAG" << endl << endl;
+    }
+
+    cout << endl << "Generating graph..." << endl;
+
     auto root = generate_dag();
 
     vector<Node *> visited_nodes;
@@ -95,35 +102,56 @@ int main(int argc, char *argv[]) {
     cout << "Graph size: " << graph_nodes_count << endl;
     cout << endl;
 
-    using namespace std::chrono;
-    if (argc > 1) {
-        std::srand(atoi(argv[1]));
-    } else {
-        std::srand(0);
-
-        std::cout << "You can provide additional parameters when testing: [SEED]" << std::endl;
-        std::cout << "  [SEED] - seed used for generating the set of strings" << std::endl;
-    }
-
-    std::vector<std::string> vector;
+    vector<string> vector;
+    int max_depth = 0;
 
     // Vygenerovani dat
-    const std::vector<std::string> &cVector = vector;
+    const std::vector<string> &cVector = vector;
 
     unsigned int maxIndex;
 
-    std::cout << std::boolalpha; // sets flag to print booleans as a strings, not as 0 and 1
+    cout << boolalpha; // sets flag to print booleans as a strings, not as 0 and 1
 
+    cout << "===== NON PARALLEL SECTION =====" << endl;
+
+    double sequential = 0;
     for (int i = 0; i < 5; i++) {
-        auto t_start = std::chrono::high_resolution_clock::now();
-        bool is_dag_avl = is_avl();
-        auto t_end = std::chrono::high_resolution_clock::now();
+        auto t_start = chrono::high_resolution_clock::now();
+        pair<bool, int> avl_res = avl(&max_depth, root, 0);
+        auto t_end = chrono::high_resolution_clock::now();
         double time = duration_cast<microseconds>(t_end - t_start).count() / 1000.0;
+        sequential += time;
 
-        std::cout << "Solution of " << i + 1 << ". instance generated in " << time << "ms" << std::endl
-                  << "   DAG is AVL:    " << is_dag_avl << std::endl
-                  << "   Max depth:     " << 0 << std::endl;
+        cout << i + 1 << ": is avl = " << avl_res.first
+                  << ", unique paths count = " << avl_res.second
+                  << ", max depth = " << max_depth
+                  << "; generated in " << time << "ms" << endl;
     }
+
+    auto sequential_avg = sequential / 5;
+    printf("\nSequential average time: %.2fms\n\n", sequential_avg);
+
+    cout << "===== PARALLEL SECTION =====" << endl;
+
+    double parallel = 0;
+    for (int i = 0; i < 5; i++) {
+        auto t_start = chrono::high_resolution_clock::now();
+        pair<bool, int> avl_res = avl_parallel(&max_depth, root, 0);
+        auto t_end = chrono::high_resolution_clock::now();
+        double time = duration_cast<microseconds>(t_end - t_start).count() / 1000.0;
+        parallel += time;
+
+        cout << i + 1 << ": is avl = " << avl_res.first
+                  << ", unique paths count = " << avl_res.second
+                  << ", max depth = " << max_depth
+                  << "; generated in " << time << "ms" << endl;
+    }
+
+    auto parallel_avg = parallel / 5;
+    printf("\nParallel average time: %.2fms\n\n", parallel_avg);
+
+    printf("================= parallel / sequential = %.3f =================\n",
+           parallel_avg / sequential_avg);
 
     return 0;
 }
