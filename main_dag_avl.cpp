@@ -108,14 +108,14 @@ int main(int argc, char *argv[]) {
     // Vygenerovani dat
     const std::vector<string> &cVector = vector;
 
-    unsigned int maxIndex;
-
     cout << boolalpha; // sets flag to print booleans as a strings, not as 0 and 1
 
     cout << "===== NON PARALLEL SECTION =====" << endl;
 
+    int iterations_count = 6;
+
     double sequential = 0;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < iterations_count; i++) {
         auto t_start = chrono::high_resolution_clock::now();
         pair<bool, int> avl_res = avl(&max_depth, root, 0);
         auto t_end = chrono::high_resolution_clock::now();
@@ -128,13 +128,13 @@ int main(int argc, char *argv[]) {
                   << "; generated in " << time << "ms" << endl;
     }
 
-    auto sequential_avg = sequential / 5;
+    auto sequential_avg = sequential / iterations_count;
     printf("\nSequential average time: %.2fms\n\n", sequential_avg);
 
     cout << "===== PARALLEL SECTION =====" << endl;
 
     double parallel = 0;
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < iterations_count; i++) {
         auto t_start = chrono::high_resolution_clock::now();
         pair<bool, int> avl_res = avl_parallel(&max_depth, root, 0);
         auto t_end = chrono::high_resolution_clock::now();
@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
                   << "; generated in " << time << "ms" << endl;
     }
 
-    auto parallel_avg = parallel / 5;
+    auto parallel_avg = parallel / iterations_count;
     printf("\nParallel average time: %.2fms\n\n", parallel_avg);
 
     printf("================= parallel / sequential = %.3f =================\n",
