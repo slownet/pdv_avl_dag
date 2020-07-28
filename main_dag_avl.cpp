@@ -36,7 +36,7 @@ void link_nodes_randomly(vector<Node *> nodes) {
             continue;
         }
 
-        if ((rand() % 9 != 0) and (i != last_idx)) { // connect with probability 2/3
+        if ((rand() % 9 != 0) and (i != last_idx)) { // connect with probability 8/9
             auto max_idx = nodes.size();
             auto min_idx = i + 1;
 
@@ -74,12 +74,14 @@ void visit_reachable_nodes(vector<Node *> *visited_nodes, Node *node) {
 }
 
 Node *generate_dag() {
-    auto nodes = generate_empty_nodes(20000);
+    auto nodes = generate_empty_nodes(40000);
     link_nodes_randomly(nodes);
     return nodes[0];
 }
 
 int main(int argc, char *argv[]) {
+    const bool SHOW_GRAPH_SIZE = false; // works slow, wait for it if you want :D
+
     using namespace chrono;
     if (argc > 1) {
         srand(atoi(argv[1]));
@@ -92,21 +94,28 @@ int main(int argc, char *argv[]) {
 
     cout << endl << "Generating graph..." << endl;
 
+    auto graph_generation_start = chrono::high_resolution_clock::now();
+
     auto root = generate_dag();
 
-    vector<Node *> visited_nodes;
-    visit_reachable_nodes(&visited_nodes, root);
+    auto graph_generation_end = chrono::high_resolution_clock::now();
+    double graph_generation_time =
+            duration_cast<microseconds>(graph_generation_end - graph_generation_start).count() / 1000.0;
 
-    auto graph_nodes_count = visited_nodes.size();
+    cout << "Graph generation time: " << graph_generation_time << "ms" << endl;
 
-    cout << "Graph size: " << graph_nodes_count << endl;
-    cout << endl;
+    if (SHOW_GRAPH_SIZE) {
+        vector<Node *> visited_nodes;
+        visit_reachable_nodes(&visited_nodes, root);
 
-    vector<string> vector;
+        auto graph_nodes_count = visited_nodes.size();
+
+        cout << "Graph size: " << graph_nodes_count << endl;
+        cout << endl;
+    }
+
+
     int max_depth = 0;
-
-    // Vygenerovani dat
-    const std::vector<string> &cVector = vector;
 
     cout << boolalpha; // sets flag to print booleans as a strings, not as 0 and 1
 
@@ -123,9 +132,9 @@ int main(int argc, char *argv[]) {
         sequential += time;
 
         cout << i + 1 << ": is avl = " << avl_res.first
-                  << ", unique paths count = " << avl_res.second
-                  << ", max depth = " << max_depth
-                  << "; generated in " << time << "ms" << endl;
+             << ", unique paths count = " << avl_res.second
+             << ", max depth = " << max_depth
+             << "; generated in " << time << "ms" << endl;
     }
 
     auto sequential_avg = sequential / iterations_count;
@@ -142,9 +151,9 @@ int main(int argc, char *argv[]) {
         parallel += time;
 
         cout << i + 1 << ": is avl = " << avl_res.first
-                  << ", unique paths count = " << avl_res.second
-                  << ", max depth = " << max_depth
-                  << "; generated in " << time << "ms" << endl;
+             << ", unique paths count = " << avl_res.second
+             << ", max depth = " << max_depth
+             << "; generated in " << time << "ms" << endl;
     }
 
     auto parallel_avg = parallel / iterations_count;
